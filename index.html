@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adobe Services Disabler - turn off Adobe background processes on Mac &amp; Windows</title>
+    <meta name="description" content="One command disables every Adobe background service, helper, and startup entry on macOS or Windows. Fully reversible - one command brings them all back.">
+    <meta property="og:title" content="Adobe Services Disabler">
+    <meta property="og:description" content="One command disables every Adobe background service, helper, and startup entry on macOS or Windows. Fully reversible.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://dandanilyuk.github.io/adobe_services_disabler/">
+    <meta property="og:site_name" content="Adobe Services Disabler">
+    <meta property="og:locale" content="en_US">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Adobe Services Disabler">
+    <meta name="twitter:description" content="One command turns off everything Adobe runs in the background on macOS or Windows. One command turns it back on.">
+    <link rel="canonical" href="https://dandanilyuk.github.io/adobe_services_disabler/">
+    <meta name="theme-color" content="#0f1317">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔌</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="theme-init.js"></script>
+</head>
+
+<body>
+    <a class="skip-link" href="#main-content">Skip to main content</a>
+
+    <div class="container">
+        <nav class="topbar" aria-label="Site">
+            <span class="wordmark">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 2v9"/><path d="M18.36 5.64a9 9 0 1 1-12.72 0"/></svg>
+                Adobe Services Disabler
+            </span>
+            <div class="topbar-actions">
+                <a class="topbar-link" href="https://github.com/DanDanilyuk/adobe_services_disabler" target="_blank" rel="noopener noreferrer">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+                    GitHub
+                </a>
+                <button id="themeToggleBtn" class="theme-btn" aria-label="Switch to light theme">
+                    <svg id="themeIconMoon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                    <svg id="themeIconSun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" hidden><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+                </button>
+            </div>
+        </nav>
+
+        <header class="hero">
+            <div class="hero-copy">
+                <p class="eyebrow">One command &middot; macOS &amp; Windows &middot; Fully reversible</p>
+                <h1>Turn <span class="accent">off</span> everything Adobe runs in the background.</h1>
+                <p class="subtitle">Creative Cloud quietly installs helpers, updaters, and telemetry agents that start with your machine. One command shuts every one of them down. The same command turns them back on.</p>
+
+                <div class="os-switch" role="tablist" aria-label="Choose your operating system">
+                    <button class="os-tab" id="tab-mac" role="tab" aria-selected="true" aria-controls="panel-mac">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+                        macOS
+                    </button>
+                    <button class="os-tab" id="tab-win" role="tab" aria-selected="false" aria-controls="panel-win" tabindex="-1">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5.55 10.4 4.5v7.15H3V5.55zm0 12.9 7.4 1.05v-7.06H3v6.01zm8.21 1.16L21 21V12.44h-9.79v7.17zm0-15.22v7.26H21V3l-9.79 1.39z"/></svg>
+                        Windows
+                    </button>
+                </div>
+
+                <div class="terminal" id="panel-mac" role="tabpanel" aria-labelledby="tab-mac">
+                    <div class="terminal-bar">
+                        <span class="traffic" aria-hidden="true"><i></i><i></i><i></i></span>
+                        <span class="terminal-title">Terminal &middot; zsh</span>
+                        <button class="copy-btn" data-copy-target="cmd-mac" aria-label="Copy the macOS command">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                            <span class="btn-text">Copy</span>
+                        </button>
+                    </div>
+                    <code class="terminal-body prompt-mac" id="cmd-mac">/bin/bash -c "$(curl -fsSL https://dandanilyuk.github.io/adobe_services_disabler/disable_adobe_services.sh)"</code>
+                    <p class="terminal-hint">Shows what is currently running, then an arrow-key picker: disable or enable. No flags to remember. Asks for sudo only to cover Adobe's system daemons. <a href="https://github.com/DanDanilyuk/adobe_services_disabler/blob/main/disable_adobe_services.sh" target="_blank" rel="noopener noreferrer">Read the script first</a></p>
+                </div>
+
+                <div class="terminal" id="panel-win" role="tabpanel" aria-labelledby="tab-win" hidden>
+                    <div class="terminal-bar">
+                        <span class="terminal-title">Windows PowerShell</span>
+                        <span class="win-controls" aria-hidden="true"><i>&#x2013;</i><i>&#x25A1;</i><i>&#x2715;</i></span>
+                        <button class="copy-btn" data-copy-target="cmd-win" aria-label="Copy the Windows command">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                            <span class="btn-text">Copy</span>
+                        </button>
+                    </div>
+                    <code class="terminal-body prompt-win" id="cmd-win">powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://dandanilyuk.github.io/adobe_services_disabler/disable_adobe_services.ps1 | iex"</code>
+                    <p class="terminal-hint">Same status view and picker, no flags. Use an Administrator window to cover services and machine-wide tasks. <a href="https://github.com/DanDanilyuk/adobe_services_disabler/blob/main/disable_adobe_services.ps1" target="_blank" rel="noopener noreferrer">Read the script first</a></p>
+                </div>
+
+                <p class="os-note">Detected <strong id="osName">macOS</strong>. Use the tabs if that's not this machine.</p>
+                <p class="sr-status" id="copyStatus" role="status" aria-live="polite"></p>
+            </div>
+
+            <aside class="monitor" aria-label="Simulated view of Adobe background processes being stopped">
+                <div class="monitor-chrome">
+                    <span class="traffic" aria-hidden="true"><i></i><i></i><i></i></span>
+                    <span class="monitor-title" id="monitorTitle">Activity Monitor &middot; Adobe</span>
+                    <span class="win-controls" aria-hidden="true"><i>&#x2013;</i><i>&#x25A1;</i><i>&#x2715;</i></span>
+                    <button class="replay-btn" id="replayBtn" aria-label="Replay the demo">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+                    </button>
+                </div>
+                <div class="monitor-head" aria-hidden="true">
+                    <span>Process</span><span>Memory</span><span>Status</span>
+                </div>
+                <ul class="monitor-rows" id="monitorRows" role="list"></ul>
+                <div class="monitor-tally" id="monitorTally"></div>
+            </aside>
+        </header>
+
+        <main id="main-content">
+            <section class="card">
+                <h2>What gets switched off</h2>
+                <p class="card-lede">Both scripts find Adobe's launch items by wildcard, so they still work after Creative Cloud updates recreate them.</p>
+                <div class="os-columns">
+                    <div class="os-col">
+                        <h3>
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+                            On macOS
+                        </h3>
+                        <ul class="kill-list" role="list">
+                            <li><code>launchd agents &amp; daemons</code>Every com.adobe.* plist is booted out and marked disabled, so it stays off across reboots.</li>
+                            <li><code>App extensions</code>Finder Sync and the right-click extension are switched off at the pluginkit level, the only place they stay off.</li>
+                            <li><code>Running helpers</code>CoreSync, CCXProcess, AdobeIPCBroker and friends are stopped on the spot.</li>
+                        </ul>
+                    </div>
+                    <div class="os-col">
+                        <h3>
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5.55 10.4 4.5v7.15H3V5.55zm0 12.9 7.4 1.05v-7.06H3v6.01zm8.21 1.16L21 21V12.44h-9.79v7.17zm0-15.22v7.26H21V3l-9.79 1.39z"/></svg>
+                            On Windows
+                        </h3>
+                        <ul class="kill-list" role="list">
+                            <li><code>Services</code>Every Adobe service is stopped and its startup type set to Disabled.</li>
+                            <li><code>Scheduled tasks</code>Updater and telemetry tasks are disabled in place.</li>
+                            <li><code>Startup entries</code>Flipped with the same StartupApproved flag Task Manager uses. Nothing is deleted.</li>
+                            <li><code>Running helpers</code>Background processes are stopped. Creative apps never are.</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card">
+                <h2>Built to be undone</h2>
+                <div class="grid">
+                    <div class="grid-item">
+                        <h3>One command undoes it</h3>
+                        <p>Run the same one-liner again and pick Enable. Nothing was deleted, so the same switches flip back and everything loads at the next login or boot.</p>
+                    </div>
+                    <div class="grid-item">
+                        <h3>Creative apps are safe</h3>
+                        <p>Photoshop, Acrobat, Premiere, Lightroom and the rest are never killed and never touched. Only the background helpers are.</p>
+                    </div>
+                    <div class="grid-item">
+                        <h3>It shows you first</h3>
+                        <p>Before anything happens it lists every Adobe item on your machine and whether it is currently on. Then you choose, or quit.</p>
+                    </div>
+                    <div class="grid-item">
+                        <h3>No black box</h3>
+                        <p>A few hundred lines of readable bash and PowerShell, in the open on GitHub. Read them before you run them.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card">
+                <h2>The fine print</h2>
+                <ul class="notes" role="list">
+                    <li>On macOS, sudo is requested once, only for Adobe's system-wide daemons. Decline it and the per-user agents and app extensions are still handled.</li>
+                    <li>On Windows, run from an Administrator window to cover services, scheduled tasks, and machine-wide startup entries. Without admin, per-user items are still handled.</li>
+                    <li>Opening the Creative Cloud desktop app can respawn some helpers until your next reboot. They stay off after that.</li>
+                    <li>Adobe installers recreate their launch items during updates. Re-run the command any time; it rediscovers whatever exists.</li>
+                    <li>On macOS, also check System Settings &gt; General &gt; Login Items and turn off anything from Adobe listed there.</li>
+                    <li>Quitting from the menu is always safe: nothing is touched until you pick Disable or Enable.</li>
+                    <li>If you download the script instead of running the one-liner, it deletes itself once it finishes, so nothing is left in your Downloads folder.</li>
+                </ul>
+                <details class="automation">
+                    <summary>What the menu looks like</summary>
+                    <div class="automation-body">
+                        <p>There are no flags or arguments to remember. Run the one command and you get a list of what Adobe has installed, then three choices:</p>
+                        <pre><code>  Disable Adobe startup services
+  Enable Adobe startup services
+  Quit</code></pre>
+                        <p>Arrow keys move, Enter selects, <code>q</code> or Esc backs out without touching anything.</p>
+                    </div>
+                </details>
+            </section>
+        </main>
+
+        <footer>
+            <p class="foot-links">
+                <a href="https://github.com/DanDanilyuk/adobe_services_disabler" target="_blank" rel="noopener noreferrer">Scripts + site on GitHub</a>
+                <span class="foot-sep">&middot;</span>
+                <a href="https://github.com/DanDanilyuk/adobe_services_disabler/issues" target="_blank" rel="noopener noreferrer">Report an issue</a>
+                <span class="foot-sep">&middot;</span>
+                <span>No analytics, no cookies. Fonts load from Google.</span>
+            </p>
+            <p class="foot-made">Built by <a href="https://www.dandanilyuk.com/" target="_blank" rel="noopener noreferrer">Dan Danilyuk</a></p>
+        </footer>
+    </div>
+
+    <script src="main.js" defer></script>
+</body>
+
+</html>

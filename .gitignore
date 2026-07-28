@@ -1,0 +1,14 @@
+# macOS
+.DS_Store
+._*
+
+# Playwright MCP screenshot / snapshot output
+.playwright-mcp/
+
+# Editors
+.vscode/
+.idea/
+*.swp
+
+# Local task tracking (never committed)
+TASK_LIST.md
