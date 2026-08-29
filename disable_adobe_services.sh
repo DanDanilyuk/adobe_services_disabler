@@ -13,7 +13,8 @@
 #   - Adobe's app extensions (Finder Sync, right-click menu). macOS relaunches
 #     these itself, so pluginkit is the only place they stay off.
 #   - Running helpers. Anything whose executable path contains "adobe", except
-#     the creative apps in /Applications/Adobe* which are never touched.
+#     the creative apps in /Applications/Adobe* (Photoshop, Lightroom, and
+#     the rest). The Creative Cloud desktop app is a helper and is stopped.
 #
 # If you downloaded this file, it deletes itself when it finishes.
 #
@@ -185,7 +186,7 @@ is_disabled() {
 }
 
 show_status() {
-  local gui sys i label state
+  local gui sys i label state pid path
   gui="$(launchctl print-disabled "$GUI_DOMAIN" 2>/dev/null)"
   sys="$(launchctl print-disabled system 2>/dev/null)"
 
@@ -207,6 +208,9 @@ show_status() {
     esac
     printf '  [appex]  %-46s %s\n' "${APPEX_IDS[$i]}" "$state"
   done
+  while IFS=$'\t' read -r pid path; do
+    printf '  [running] %-46s pid %s\n' "${path##*/}" "$pid"
+  done < <(each_helper)
 }
 
 # --- Apply -------------------------------------------------------------------
@@ -251,7 +255,11 @@ apply_daemons() {
   local i plist label
   echo
   echo "== Launch daemons (needs sudo) =="
-  if ! sudo -v; then
+  # Prompt on the real terminal, not stdin: stdin is the script under
+  # curl|bash, or the "1"/"2" line under echo 1 | bash.
+  if sudo -n true 2>/dev/null || { sudo -v </dev/tty; } 2>/dev/null; then
+    :
+  else
     echo "sudo declined, skipping the system daemons. Everything else was applied." >&2
     return 0
   fi
@@ -270,25 +278,65 @@ apply_daemons() {
   done
 }
 
+# 0 if this executable is an Adobe helper we may stop.
+# comm= is the executable (a full path on current macOS). command= also
+# matches this script's own curl|bash command line, so we do not use it.
+# The Creative Cloud desktop app is a helper even when it lives under
+# /Applications/Adobe Creative Cloud. Other /Applications/Adobe* apps
+# (Lightroom, Photoshop, Acrobat, ...) are left alone.
+is_helper() {
+  local path="$1" pid="${2:-0}"
+  [ "$pid" -eq $$ ] && return 1
+  case "$path" in
+    /Applications/Adobe\ Creative\ Cloud*) return 0 ;;
+    /Applications/Adobe*) return 1 ;;
+  esac
+  # Older macOS: comm is a short name with no slash.
+  case "$path" in
+    */*) ;;
+    Photoshop*|Illustrator*|InDesign*|InCopy*|AfterFX*|Acrobat*|AcroCEF*|RdrCEF*|AcroRd32*|Premiere*|Lightroom*|Audition*|Bridge*|Animate*|Dreamweaver*|Dimension*|Fresco*|Prelude*|XD) return 1 ;;
+  esac
+  case "$path" in
+    *[Aa]dobe*|*[Cc]reative\ [Cc]loud*) return 0 ;;
+  esac
+  return 1
+}
+
+each_helper() {
+  local pid path
+  while read -r pid path; do
+    [ -n "$pid" ] || continue
+    is_helper "$path" "$pid" || continue
+    printf '%s\t%s\n' "$pid" "$path"
+  done < <(ps -axo pid=,comm=)
+}
+
 kill_helpers() {
-  local pid path found=0 stubborn=""
+  local pid path found=0 stubborn="" live=""
   echo
   echo "== Stopping running Adobe processes =="
-  while read -r pid path; do
-    # Never touch the creative apps - someone may have work open.
-    case "$path" in
-      /Applications/Adobe*) continue ;;
-      *[Aa]dobe*) ;;
-      *) continue ;;
-    esac
+  while IFS=$'\t' read -r pid path; do
     found=1
     echo "Stopping ${path##*/} (pid $pid)"
-    if ! kill "$pid" 2>/dev/null; then
+    if kill "$pid" 2>/dev/null; then
+      live="$live $pid"
+    else
       stubborn="$stubborn $pid"
     fi
-  done < <(ps -axo pid=,comm=)
+  done < <(each_helper)
 
   [ "$found" -eq 0 ] && echo "None running."
+
+  # SIGTERM is enough for most of them; SIGKILL the ones that ignore it.
+  if [ -n "$live" ]; then
+    sleep 1
+    for pid in $live; do
+      if kill -0 "$pid" 2>/dev/null; then
+        kill -9 "$pid" 2>/dev/null || stubborn="$stubborn $pid"
+      fi
+    done
+  fi
+
   if [ -n "$stubborn" ]; then
     echo
     echo "These are owned by another user. To stop them too:"
@@ -314,12 +362,13 @@ self_delete() {
 # --- Main --------------------------------------------------------------------
 
 main() {
-  local reply
+  local reply has_helpers=0
 
   collect
+  while IFS=$'\t' read -r _; do has_helpers=1; break; done < <(each_helper)
 
   if [ "${#AGENT_PLISTS[@]}" -eq 0 ] && [ "${#DAEMON_PLISTS[@]}" -eq 0 ] \
-     && [ "${#APPEX_IDS[@]}" -eq 0 ]; then
+     && [ "${#APPEX_IDS[@]}" -eq 0 ] && [ "$has_helpers" -eq 0 ]; then
     echo "Nothing from Adobe found. Nothing to do."
     self_delete
     exit 0

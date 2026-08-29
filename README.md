@@ -68,7 +68,9 @@ script is piped straight into bash there is no file to remove in the first place
   extension are switched off with `pluginkit -e ignore`. macOS relaunches these
   itself, so this is the only level at which they stay off.
 - **Running helpers** - anything whose executable path contains `adobe` is
-  stopped, *except* the creative apps under `/Applications/Adobe*`.
+  stopped, *except* the creative apps under `/Applications/Adobe*` (Photoshop,
+  Lightroom, Acrobat, and the rest). The Creative Cloud desktop app is a
+  helper and is stopped.
 
 sudo is requested once, and only if Adobe system daemons are present. Decline it
 and everything else is still applied.
@@ -79,8 +81,9 @@ and everything else is still applied.
   start type is recorded under `HKCU:\Software\adobe_services_disabler` first, so
   Enable restores Manual rather than forcing everything to Automatic.
 - **Scheduled tasks** - the updater and telemetry tasks, disabled in place.
-- **Startup entries** - Run and RunOnce keys, flipped using the same
-  `StartupApproved` flag Task Manager's Startup tab writes. Nothing is deleted.
+- **Startup entries** - Run and RunOnce keys, plus shortcuts in the user and
+  all-users Startup folders, flipped using the same `StartupApproved` flag
+  Task Manager's Startup tab writes. Nothing is deleted.
 - **Running helpers** - background processes stopped; creative apps never are.
 
 Without Administrator rights the machine-wide items are skipped and only
@@ -97,7 +100,6 @@ per-user items are handled. The script says so up front.
   command whenever that happens; it rediscovers whatever exists.
 - On macOS, also check System Settings > General > Login Items and turn off
   anything from Adobe listed there. Those are not launchd items.
-- Windows Startup-folder shortcuts (`shell:startup`) are not handled yet.
 
 ## Repository layout
 

@@ -64,8 +64,13 @@
     mac: document.getElementById('panel-mac'),
     win: document.getElementById('panel-win')
   };
+  var menus = {
+    mac: document.getElementById('menu-mac'),
+    win: document.getElementById('menu-win')
+  };
   var osName = document.getElementById('osName');
   var currentOS = 'mac';
+  var cmdMode = 'run';
 
   function detectOS() {
     var p = (navigator.userAgentData && navigator.userAgentData.platform) ||
@@ -73,25 +78,97 @@
     return /win/i.test(p) ? 'win' : 'mac';
   }
 
-  function selectOS(os, focusTab) {
+  function osFromHash() {
+    var h = (location.hash || '').replace(/^#/, '').toLowerCase();
+    if (h === 'win' || h === 'windows') return 'win';
+    if (h === 'mac' || h === 'macos' || h === 'osx') return 'mac';
+    return null;
+  }
+
+  function setHash(os) {
+    var id = os === 'win' ? 'windows' : 'macos';
+    if ((location.hash || '').replace(/^#/, '') === id) return;
+    if (history.replaceState) {
+      history.replaceState(null, '', location.pathname + location.search + '#' + id);
+    } else {
+      location.hash = id;
+    }
+  }
+
+  function selectOS(os, opts) {
+    opts = opts || {};
     currentOS = os;
     ['mac', 'win'].forEach(function (key) {
       var active = key === os;
       tabs[key].setAttribute('aria-selected', String(active));
       tabs[key].tabIndex = active ? 0 : -1;
       panels[key].hidden = !active;
+      menus[key].hidden = !active;
     });
-    if (focusTab) tabs[os].focus();
+    applyCmdMode();
+    if (opts.focusTab) tabs[os].focus();
+    if (opts.writeHash) setHash(os);
     renderMonitor(os);
     playWhenVisible();
   }
 
   Object.keys(tabs).forEach(function (key) {
-    tabs[key].addEventListener('click', function () { selectOS(key, false); });
+    tabs[key].addEventListener('click', function () {
+      selectOS(key, { writeHash: true });
+    });
     tabs[key].addEventListener('keydown', function (e) {
       if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
         e.preventDefault();
-        selectOS(key === 'mac' ? 'win' : 'mac', true);
+        selectOS(key === 'mac' ? 'win' : 'mac', { writeHash: true, focusTab: true });
+      }
+    });
+  });
+
+  window.addEventListener('hashchange', function () {
+    var os = osFromHash();
+    if (os && os !== currentOS) selectOS(os, {});
+  });
+
+  /* ---------- Run / inspect ---------- */
+
+  var modeBtns = Array.prototype.slice.call(document.querySelectorAll('.cmd-opt'));
+
+  function applyCmdMode() {
+    var panel = panels[currentOS];
+    var body = panel.querySelector('.terminal-body');
+    var run = body.getAttribute('data-run');
+    var inspect = body.getAttribute('data-inspect');
+    body.textContent = cmdMode === 'inspect' ? inspect : run;
+    body.classList.toggle('prompt-mac', currentOS === 'mac' && cmdMode === 'run');
+    body.classList.toggle('prompt-win', currentOS === 'win' && cmdMode === 'run');
+    panel.querySelector('.hint-run').hidden = cmdMode !== 'run';
+    panel.querySelector('.hint-inspect').hidden = cmdMode !== 'inspect';
+  }
+
+  function setCmdMode(mode, focusBtn) {
+    cmdMode = mode;
+    modeBtns.forEach(function (btn) {
+      var on = btn.getAttribute('data-mode') === mode;
+      btn.setAttribute('aria-checked', String(on));
+      btn.tabIndex = on ? 0 : -1;
+    });
+    applyCmdMode();
+    if (focusBtn) {
+      modeBtns.filter(function (b) {
+        return b.getAttribute('data-mode') === mode;
+      })[0].focus();
+    }
+  }
+
+  modeBtns.forEach(function (btn) {
+    btn.tabIndex = btn.getAttribute('data-mode') === 'run' ? 0 : -1;
+    btn.addEventListener('click', function () {
+      setCmdMode(btn.getAttribute('data-mode'), false);
+    });
+    btn.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+        e.preventDefault();
+        setCmdMode(cmdMode === 'run' ? 'inspect' : 'run', true);
       }
     });
   });
@@ -141,6 +218,20 @@
     });
   });
 
+  document.querySelectorAll('.terminal-body').forEach(function (el) {
+    var downX = 0;
+    var downY = 0;
+    el.addEventListener('mousedown', function (e) {
+      downX = e.clientX;
+      downY = e.clientY;
+    });
+    el.addEventListener('click', function (e) {
+      if (Math.abs(e.clientX - downX) > 5 || Math.abs(e.clientY - downY) > 5) return;
+      var btn = el.closest('.terminal').querySelector('.copy-btn');
+      if (btn) btn.click();
+    });
+  });
+
   /* ---------- Process monitor demo ---------- */
 
   var PROCESSES = {
@@ -170,6 +261,7 @@
   var monitorTitle = document.getElementById('monitorTitle');
   var monitorRows = document.getElementById('monitorRows');
   var monitorTally = document.getElementById('monitorTally');
+  var tallyFill = document.getElementById('tallyFill');
   var replayBtn = document.getElementById('replayBtn');
   var killTimers = [];
   // On phones the monitor sits well below the fold, so firing the animation at
@@ -185,7 +277,12 @@
     monitor.classList.toggle('os-win', os === 'win');
     monitorTitle.textContent = os === 'win' ? 'Task Manager · Adobe' : 'Activity Monitor · Adobe';
     monitorRows.innerHTML = '';
-    PROCESSES[os].forEach(function (proc) {
+    var procs = PROCESSES[os];
+    var maxMem = 1;
+    procs.forEach(function (proc) {
+      if (proc.mem > maxMem) maxMem = proc.mem;
+    });
+    procs.forEach(function (proc) {
       var li = document.createElement('li');
       li.className = 'mrow';
 
@@ -195,7 +292,19 @@
 
       var mem = document.createElement('span');
       mem.className = 'mmem';
-      mem.textContent = proc.mem + ' MB';
+
+      var bar = document.createElement('span');
+      bar.className = 'mbar';
+      bar.setAttribute('aria-hidden', 'true');
+      var fill = document.createElement('i');
+      fill.style.width = ((proc.mem / maxMem) * 100) + '%';
+      bar.appendChild(fill);
+
+      var amount = document.createElement('span');
+      amount.className = 'mamt';
+      amount.textContent = proc.mem + ' MB';
+
+      mem.append(bar, amount);
 
       var status = document.createElement('span');
       status.className = 'mstatus';
@@ -207,16 +316,17 @@
     monitorPlayed = false;
     // Fill the tally now: the animation may not run until this scrolls into
     // view, and an empty strip under the rows looks like a rendering fault.
-    setTally(0, 0, PROCESSES[os].length);
+    setTally(0, 0, procs.length);
   }
 
   function setTally(stopped, freed, total) {
+    tallyFill.style.width = total ? ((stopped / total) * 100) + '%' : '0%';
     if (stopped === 0) {
       monitorTally.textContent = total + ' background processes · 0 MB freed';
-      monitorTally.classList.remove('done');
+      monitorTally.parentElement.classList.remove('done');
     } else {
       monitorTally.textContent = stopped + ' of ' + total + ' stopped · ' + freed + ' MB freed';
-      monitorTally.classList.toggle('done', stopped === total);
+      monitorTally.parentElement.classList.toggle('done', stopped === total);
     }
   }
 
@@ -295,5 +405,5 @@
 
   var detected = detectOS();
   osName.textContent = detected === 'win' ? 'Windows' : 'macOS';
-  selectOS(detected, false);
+  selectOS(osFromHash() || detected, {});
 })();

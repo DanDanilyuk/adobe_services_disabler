@@ -11,8 +11,8 @@ What it covers:
   - Adobe services. Stopped and set to Disabled. The original start type is
     saved first, so Enable puts back Manual instead of forcing Automatic.
   - Adobe scheduled tasks (updaters, telemetry).
-  - Run and RunOnce startup entries, flipped with the same StartupApproved
-    flag Task Manager's Startup tab uses. Nothing is deleted.
+  - Run, RunOnce, and Startup-folder shortcuts, flipped with the same
+    StartupApproved flag Task Manager's Startup tab uses. Nothing is deleted.
   - Running helpers. Creative apps are never stopped.
 
 If you downloaded this file, it deletes itself when it finishes.
@@ -40,10 +40,11 @@ $IsAdmin = ([Security.Principal.WindowsPrincipal] `
 # Never stopped, even though "adobe" appears in the name or path. Prefixes, so
 # "Photoshop (Beta)" is covered too.
 $NeverKill = @(
-  'Photoshop', 'Illustrator', 'InDesign', 'AfterFX', 'Animate', 'Bridge',
-  'Dreamweaver', 'Acrobat', 'AcroRd32', 'Adobe Premiere', 'Adobe Audition',
-  'Adobe Media Encoder', 'Adobe Lightroom', 'Lightroom', 'Character Animator',
-  'Adobe Dimension', 'Adobe Substance', 'Adobe Digital Editions'
+  'Photoshop', 'Illustrator', 'InDesign', 'InCopy', 'AfterFX', 'Animate',
+  'Bridge', 'Dreamweaver', 'Acrobat', 'AcroCEF', 'RdrCEF', 'AcroRd32',
+  'Adobe Premiere', 'Adobe Audition', 'Adobe Media Encoder', 'Adobe Lightroom',
+  'Lightroom', 'Character Animator', 'Adobe Dimension', 'Adobe Substance',
+  'Adobe Digital Editions', 'Adobe XD'
 )
 
 # Folders that only ever hold background helpers, so anything running from
@@ -111,6 +112,39 @@ function Get-AdobeRunEntries {
   }
 }
 
+# Shortcuts in the Startup folders. Task Manager flips these via
+# StartupApproved\StartupFolder; the value name is the full path of the .lnk.
+function Get-AdobeStartupShortcuts {
+  $places = @(
+    [pscustomobject]@{
+      Label      = 'Startup'
+      Path       = Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs\Startup'
+      Approved   = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\StartupFolder'
+      NeedsAdmin = $false
+    }
+    [pscustomobject]@{
+      Label      = 'StartupAll'
+      Path       = Join-Path $env:ProgramData 'Microsoft\Windows\Start Menu\Programs\Startup'
+      Approved   = 'HKLM:\Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\StartupFolder'
+      NeedsAdmin = $true
+    }
+  )
+  foreach ($place in $places) {
+    if (-not (Test-Path -LiteralPath $place.Path)) { continue }
+    Get-ChildItem -LiteralPath $place.Path -Force -ErrorAction SilentlyContinue |
+      Where-Object {
+        $_.Name -like '*adobe*' -or $_.Name -like '*creative cloud*'
+      } |
+      ForEach-Object {
+        [pscustomobject]@{
+          Key   = $place
+          Name  = $_.FullName
+          Value = $_.FullName
+        }
+      }
+  }
+}
+
 # No StartupApproved value means enabled. An odd first byte means disabled.
 function Test-RunEntryDisabled($entry) {
   $bytes = $null
@@ -137,7 +171,8 @@ function Set-RunEntryState($entry, [bool]$Disabled) {
 # StartType property and 5.1 is still the default on Windows.
 function Get-ServiceStartType([string]$Name) {
   try {
-    $mode = (Get-CimInstance Win32_Service -Filter "Name='$Name'").StartMode
+    $filter = "Name='$($Name.Replace("'","''"))'"
+    $mode = (Get-CimInstance Win32_Service -Filter $filter).StartMode
     switch ($mode) {
       'Auto'   { return 'Automatic' }
       'Manual' { return 'Manual' }
@@ -159,13 +194,24 @@ function Get-SavedServiceStartType([string]$Name) {
   try { return [string](Get-Item $StateKey).GetValue($Name) } catch { return $null }
 }
 
+function Test-IsCreativeApp($p) {
+  foreach ($safe in $NeverKill) {
+    if ($p.Name -like "$safe*") { return $true }
+  }
+  $path = $null
+  try { $path = $p.Path } catch { }
+  if (-not $path) { return $false }
+  # Creative Cloud desktop is a helper. Other "Adobe <Product>" folders are not.
+  if ($path -like '*\Adobe\Adobe Creative Cloud*') { return $false }
+  if ($path -like '*\Adobe\Adobe *') { return $true }
+  return $false
+}
+
 function Get-AdobeProcesses {
   Get-Process -ErrorAction SilentlyContinue | Where-Object {
     $p = $_
     if ($p.Id -eq $PID) { return $false }
-    foreach ($safe in $NeverKill) {
-      if ($p.Name -like "$safe*") { return $false }
-    }
+    if (Test-IsCreativeApp $p) { return $false }
     if ($p.Name -like '*adobe*') { return $true }
 
     # Reading .Path on a protected process throws, and with ErrorAction Stop
@@ -198,7 +244,9 @@ function Show-Status($services, $tasks, $entries, $procs) {
   }
   foreach ($e in @($entries)) {
     $state = if (Test-RunEntryDisabled $e) { 'disabled' } else { 'enabled' }
-    Write-Host ('  [startup] {0,-46} {1}' -f "$($e.Key.Label)\$($e.Name)", $state)
+    $shown = $e.Name
+    if ($shown -match '[\\/]') { $shown = Split-Path $shown -Leaf }
+    Write-Host ('  [startup] {0,-46} {1}' -f "$($e.Key.Label)\$shown", $state)
   }
   foreach ($p in @($procs)) {
     Write-Host ('  [running] {0,-46} pid {1}' -f $p.Name, $p.Id)
@@ -313,7 +361,7 @@ function Remove-Self {
 function Invoke-Main {
   $services = @(Get-AdobeServices)
   $tasks    = @(Get-AdobeTasks)
-  $entries  = @(Get-AdobeRunEntries)
+  $entries  = @(Get-AdobeRunEntries) + @(Get-AdobeStartupShortcuts)
   $procs    = @(Get-AdobeProcesses)
 
   if (-not $services -and -not $tasks -and -not $entries -and -not $procs) {
@@ -354,7 +402,7 @@ function Invoke-Main {
           }
         } else {
           $saved = Get-SavedServiceStartType $s.Name
-          $target = if ($saved) { $saved } else { 'Automatic' }
+          $target = if ($saved) { $saved } else { 'Manual' }
           Invoke-Change "Enabling $($s.Name) -> $target" {
             Set-Service -Name $s.Name -StartupType $target
             if ($target -eq 'Automatic') {
@@ -390,13 +438,15 @@ function Invoke-Main {
     Write-Host ''
     Write-Host '== Startup entries =='
     foreach ($e in $entries) {
+      $shown = $e.Name
+      if ($shown -match '[\\/]') { $shown = Split-Path $shown -Leaf }
       if ($e.Key.NeedsAdmin -and -not $IsAdmin) {
-        Write-Host "  skipped $($e.Key.Label)\$($e.Name) (needs Administrator)"
+        Write-Host "  skipped $($e.Key.Label)\$shown (needs Administrator)"
         continue
       }
       $disable = ($mode -eq 'disable')
       $verb = if ($disable) { 'Disabling' } else { 'Enabling' }
-      Invoke-Change "$verb $($e.Key.Label)\$($e.Name)" {
+      Invoke-Change "$verb $($e.Key.Label)\$shown" {
         Set-RunEntryState $e $disable
       }
     }
