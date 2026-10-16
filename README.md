@@ -44,17 +44,29 @@ you pick Disable or Enable, so quitting is always safe.
 
 ### Prefer to inspect before running
 
-That is the better habit for anything you pipe into a shell:
+That is the better habit for anything you pipe into a shell. On macOS, press `q`
+when you are done reading and the script starts at its menu:
 
 ```sh
-curl -fsSLO https://dandanilyuk.github.io/adobe_services_disabler/disable_adobe_services.sh
-less disable_adobe_services.sh
+curl -fsSLO https://dandanilyuk.github.io/adobe_services_disabler/disable_adobe_services.sh &&
+less disable_adobe_services.sh &&
 bash disable_adobe_services.sh
 ```
 
-A downloaded copy deletes itself once it finishes, so nothing is left sitting in
-your Downloads folder. A copy inside a git checkout is left alone, and when the
-script is piped straight into bash there is no file to remove in the first place.
+On Windows, Notepad opens beside the script, which waits at its menu while you
+read. `-File` with `Bypass` is needed because Windows refuses a bare
+`.\disable_adobe_services.ps1` under its default execution policy:
+
+```powershell
+$f = "$env:TEMP\disable_adobe_services.ps1"
+irm https://dandanilyuk.github.io/adobe_services_disabler/disable_adobe_services.ps1 -OutFile $f
+notepad $f
+powershell -NoProfile -ExecutionPolicy Bypass -File $f
+```
+
+A downloaded copy deletes itself once it finishes, so nothing is left lying
+around. A copy inside a git checkout is left alone, and when the script is piped
+straight into a shell there is no file to remove in the first place.
 
 ## What it actually touches
 

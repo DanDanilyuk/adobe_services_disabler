@@ -320,9 +320,12 @@ kill_helpers() {
     echo "Stopping ${path##*/} (pid $pid)"
     if kill "$pid" 2>/dev/null; then
       live="$live $pid"
-    else
+    elif ps -p "$pid" >/dev/null 2>&1; then
+      # Still there, so the kill was refused: another user owns it.
       stubborn="$stubborn $pid"
     fi
+    # Otherwise it was already gone: stopping Creative Cloud takes several
+    # of its child helpers down with it before we reach them.
   done < <(each_helper)
 
   [ "$found" -eq 0 ] && echo "None running."

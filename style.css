@@ -228,6 +228,11 @@ html[data-theme="light"] body {
     margin-bottom: 18px;
 }
 
+/* Wrap between phrases, never inside one ("Fully / reversible"). */
+.eyebrow span {
+    white-space: nowrap;
+}
+
 h1 {
     font-family: var(--display);
     font-size: clamp(2.1rem, 4.4vw, 3.15rem);
@@ -460,6 +465,21 @@ h1 .accent {
 
 .terminal-hint a:hover {
     color: var(--win-accent);
+}
+
+.terminal-hint kbd {
+    display: inline-block;
+    min-width: 1.6em;
+    padding: 0 0.4em;
+    border: 1px solid var(--win-border);
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    font-family: var(--body);
+    font-size: 0.92em;
+    line-height: 1.45;
+    text-align: center;
+    color: var(--win-text);
+    background: var(--win-bar);
 }
 
 .os-note {
@@ -971,6 +991,12 @@ footer a:hover {
     color: var(--red-strong);
 }
 
+/* Break between items, never inside one ("Report an / issue"). */
+.foot-links a,
+.foot-item {
+    white-space: nowrap;
+}
+
 .foot-sep {
     margin: 0 6px;
     opacity: 0.6;
@@ -1014,9 +1040,16 @@ footer a:hover {
     outline-offset: 2px;
 }
 
-.os-tab[aria-selected="true"]:focus-visible,
+/* A red ring vanishes against a red fill, so these get a contrasting one.
+   The copy button always sits on a dark window bar, so white works there;
+   the selected tab sits on the page surface, which is white in light theme. */
 .copy-btn:focus-visible {
     outline-color: #fff;
+    outline-offset: 3px;
+}
+
+.os-tab[aria-selected="true"]:focus-visible {
+    outline-color: var(--text);
     outline-offset: 3px;
 }
 
@@ -1080,13 +1113,19 @@ footer a:hover {
         font-size: 0.78rem;
     }
 
+    /* Too narrow for kind, label and state on one line without cutting the
+       label short, so the label gets a line of its own under the other two. */
     .status-list li {
-        grid-template-columns: 4.2rem minmax(0, 1fr);
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 0 10px;
+        padding: 4px 0;
     }
 
-    .status-list li span:last-child {
-        grid-column: 2;
-        font-size: 0.72rem;
+    .status-list code {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        white-space: normal;
+        overflow-wrap: anywhere;
     }
 }
 
@@ -1112,6 +1151,17 @@ footer a:hover {
         font-size: 0.68rem;
     }
 
+    .status-kicker,
+    .menu-instr,
+    .status-list {
+        padding-left: 14px;
+        padding-right: 14px;
+    }
+
+    .status-list {
+        font-size: 0.72rem;
+    }
+
     .monitor-head,
     .mrow {
         grid-template-columns: minmax(0, 1fr) 58px 66px;
@@ -1124,6 +1174,53 @@ footer a:hover {
 
     .mbar {
         width: 46px;
+    }
+}
+
+/* Smallest phones: the GitHub pill drops to its icon so the wordmark keeps
+   to one line. The text stays in the accessibility tree as the link name. */
+@media (max-width: 379px) {
+    .topbar-link {
+        position: relative;
+        padding: 0;
+        width: 34px;
+        height: 34px;
+        justify-content: center;
+    }
+
+    .topbar-link-text {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+    }
+}
+
+/* ── Print ── */
+
+@media print {
+    .skip-link,
+    .topbar-actions,
+    .hero-controls,
+    .copy-btn,
+    .replay-btn,
+    .os-note {
+        display: none !important;
+    }
+
+    /* Cards still waiting for the scroll reveal would print blank. */
+    .card.reveal {
+        opacity: 1;
+        transform: none;
+    }
+
+    .card,
+    .terminal,
+    .monitor {
+        box-shadow: none;
+        break-inside: avoid;
     }
 }
 

@@ -460,7 +460,11 @@ function Invoke-Main {
     if (-not $live) { Write-Host '  none running' }
     foreach ($p in $live) {
       Invoke-Change "Stopping $($p.Name) (pid $($p.Id))" {
-        Stop-Process -Id $p.Id -Force
+        # Stopping Creative Cloud takes several of its child helpers down
+        # with it, so one may be gone already. That is not a failure.
+        if (Get-Process -Id $p.Id -ErrorAction SilentlyContinue) {
+          Stop-Process -Id $p.Id -Force
+        }
       }
     }
   }

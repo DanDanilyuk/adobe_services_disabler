@@ -25,6 +25,15 @@
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
     <link rel="stylesheet" href="style.css">
     <script src="theme-init.js"></script>
+    <noscript>
+        <style>
+            /* Without JS the tabs cannot switch, so show both commands. */
+            #panel-win, #menu-win { display: block !important; }
+            #panel-win { margin-top: 14px; }
+            .hero-controls, .copy-btn, .os-note, .monitor { display: none !important; }
+            .terminal-body { cursor: text; }
+        </style>
+    </noscript>
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -53,7 +62,7 @@
             <div class="topbar-actions">
                 <a class="topbar-link" href="https://github.com/DanDanilyuk/adobe_services_disabler" target="_blank" rel="noopener noreferrer">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
-                    GitHub
+                    <span class="topbar-link-text">GitHub</span>
                 </a>
                 <button type="button" id="themeToggleBtn" class="theme-btn" aria-label="Switch to light theme">
                     <svg id="themeIconMoon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
@@ -62,93 +71,102 @@
             </div>
         </nav>
 
-        <header class="hero">
-            <div class="hero-copy">
-                <p class="eyebrow">One command &middot; macOS &amp; Windows &middot; Fully reversible</p>
-                <h1>Turn <span class="accent">off</span> everything Adobe runs in the background.</h1>
-                <p class="subtitle">Creative Cloud quietly installs helpers, updaters, and telemetry agents that start with your machine. One command shuts every one of them down. The same command turns them back on.</p>
-
-                <ul class="trust">
-                    <li>Open source</li>
-                    <li>Nothing deleted</li>
-                    <li>Creative apps untouched</li>
-                    <li>Menu, no flags</li>
-                </ul>
-
-                <div class="hero-controls">
-                    <div class="os-switch" role="tablist" aria-label="Choose your operating system">
-                        <button type="button" class="os-tab" id="tab-mac" role="tab" aria-selected="true" aria-controls="panel-mac">
-                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
-                            macOS
-                        </button>
-                        <button type="button" class="os-tab" id="tab-win" role="tab" aria-selected="false" aria-controls="panel-win" tabindex="-1">
-                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5.55 10.4 4.5v7.15H3V5.55zm0 12.9 7.4 1.05v-7.06H3v6.01zm8.21 1.16L21 21V12.44h-9.79v7.17zm0-15.22v7.26H21V3l-9.79 1.39z"/></svg>
-                            Windows
-                        </button>
-                    </div>
-                    <div class="cmd-mode" role="radiogroup" aria-label="How to copy the command">
-                        <button type="button" class="cmd-opt" role="radio" aria-checked="true" data-mode="run" id="mode-run">Run it</button>
-                        <button type="button" class="cmd-opt" role="radio" aria-checked="false" data-mode="inspect" id="mode-inspect">Read it first</button>
-                    </div>
-                </div>
-
-                <div class="terminal" id="panel-mac" role="tabpanel" aria-labelledby="tab-mac">
-                    <div class="terminal-bar">
-                        <span class="traffic" aria-hidden="true"><i></i><i></i><i></i></span>
-                        <span class="terminal-title">Terminal &middot; zsh</span>
-                        <button type="button" class="copy-btn" data-copy-target="cmd-mac" aria-label="Copy the macOS command">
-                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
-                            <span class="btn-text">Copy</span>
-                        </button>
-                    </div>
-                    <code class="terminal-body prompt-mac" id="cmd-mac"
-                        data-run="/bin/bash -c &quot;$(curl -fsSL https://dandanilyuk.github.io/adobe_services_disabler/disable_adobe_services.sh)&quot;"
-                        data-inspect="curl -fsSLO https://dandanilyuk.github.io/adobe_services_disabler/disable_adobe_services.sh&#10;less disable_adobe_services.sh&#10;bash disable_adobe_services.sh">/bin/bash -c "$(curl -fsSL https://dandanilyuk.github.io/adobe_services_disabler/disable_adobe_services.sh)"</code>
-                    <p class="terminal-hint hint-run">Shows what is currently running, then an arrow-key picker: disable or enable. No flags to remember. Asks for sudo only to cover Adobe's system daemons. <a href="https://github.com/DanDanilyuk/adobe_services_disabler/blob/main/disable_adobe_services.sh" target="_blank" rel="noopener noreferrer">Read the script first</a></p>
-                    <p class="terminal-hint hint-inspect" hidden>Downloads the script, opens it in less so you can read it, then runs it. A git checkout is left alone; a downloaded copy deletes itself when it finishes. <a href="https://github.com/DanDanilyuk/adobe_services_disabler/blob/main/disable_adobe_services.sh" target="_blank" rel="noopener noreferrer">Or read it on GitHub</a></p>
-                </div>
-
-                <div class="terminal" id="panel-win" role="tabpanel" aria-labelledby="tab-win" hidden>
-                    <div class="terminal-bar">
-                        <span class="terminal-title">Windows PowerShell</span>
-                        <span class="win-controls" aria-hidden="true"><i>&#x2013;</i><i>&#x25A1;</i><i>&#x2715;</i></span>
-                        <button type="button" class="copy-btn" data-copy-target="cmd-win" aria-label="Copy the Windows command">
-                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
-                            <span class="btn-text">Copy</span>
-                        </button>
-                    </div>
-                    <code class="terminal-body prompt-win" id="cmd-win"
-                        data-run="powershell -NoProfile -ExecutionPolicy Bypass -Command &quot;irm https://dandanilyuk.github.io/adobe_services_disabler/disable_adobe_services.ps1 | iex&quot;"
-                        data-inspect="irm https://dandanilyuk.github.io/adobe_services_disabler/disable_adobe_services.ps1 -OutFile disable_adobe_services.ps1&#10;notepad disable_adobe_services.ps1&#10;.\disable_adobe_services.ps1">powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://dandanilyuk.github.io/adobe_services_disabler/disable_adobe_services.ps1 | iex"</code>
-                    <p class="terminal-hint hint-run">Same status view and picker, no flags. Use an Administrator window to cover services and machine-wide tasks. <a href="https://github.com/DanDanilyuk/adobe_services_disabler/blob/main/disable_adobe_services.ps1" target="_blank" rel="noopener noreferrer">Read the script first</a></p>
-                    <p class="terminal-hint hint-inspect" hidden>Saves the script, opens it in Notepad, then runs it. Use an Administrator window to cover services and machine-wide tasks. <a href="https://github.com/DanDanilyuk/adobe_services_disabler/blob/main/disable_adobe_services.ps1" target="_blank" rel="noopener noreferrer">Or read it on GitHub</a></p>
-                </div>
-
-                <p class="os-note">Detected <strong id="osName">macOS</strong>. Use the tabs if that's not this machine.</p>
-                <p class="sr-status" id="copyStatus" role="status" aria-live="polite"></p>
-            </div>
-
-            <aside class="monitor" aria-label="Simulated view of Adobe background processes being stopped">
-                <div class="monitor-chrome">
-                    <span class="traffic" aria-hidden="true"><i></i><i></i><i></i></span>
-                    <span class="monitor-title" id="monitorTitle">Activity Monitor &middot; Adobe</span>
-                    <span class="win-controls" aria-hidden="true"><i>&#x2013;</i><i>&#x25A1;</i><i>&#x2715;</i></span>
-                    <button type="button" class="replay-btn" id="replayBtn" aria-label="Replay the demo">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
-                    </button>
-                </div>
-                <div class="monitor-head" aria-hidden="true">
-                    <span>Process</span><span>Memory</span><span>Status</span>
-                </div>
-                <ul class="monitor-rows" id="monitorRows" role="list"></ul>
-                <div class="monitor-tally">
-                    <div class="tally-track" aria-hidden="true"><i id="tallyFill"></i></div>
-                    <span id="monitorTally"></span>
-                </div>
-            </aside>
-        </header>
-
         <main id="main-content">
+            <section class="hero">
+                <div class="hero-copy">
+                    <p class="eyebrow"><span>One command</span> &middot; <span>macOS &amp; Windows</span> &middot; <span>Fully reversible</span></p>
+                    <h1>Turn <span class="accent">off</span> everything Adobe runs in the background.</h1>
+                    <p class="subtitle">Creative Cloud quietly installs helpers, updaters, and telemetry agents that start with your machine. One command shuts every one of them down. The same command turns them back on.</p>
+
+                    <ul class="trust">
+                        <li>Open source</li>
+                        <li>Nothing deleted</li>
+                        <li>Creative apps untouched</li>
+                        <li>Menu, no flags</li>
+                    </ul>
+
+                    <div class="hero-controls">
+                        <div class="os-switch" role="tablist" aria-label="Choose your operating system">
+                            <button type="button" class="os-tab" id="tab-mac" role="tab" aria-selected="true" aria-controls="panel-mac">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+                                macOS
+                            </button>
+                            <button type="button" class="os-tab" id="tab-win" role="tab" aria-selected="false" aria-controls="panel-win" tabindex="-1">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5.55 10.4 4.5v7.15H3V5.55zm0 12.9 7.4 1.05v-7.06H3v6.01zm8.21 1.16L21 21V12.44h-9.79v7.17zm0-15.22v7.26H21V3l-9.79 1.39z"/></svg>
+                                Windows
+                            </button>
+                        </div>
+                        <div class="cmd-mode" role="radiogroup" aria-label="How to copy the command">
+                            <button type="button" class="cmd-opt" role="radio" aria-checked="true" data-mode="run" id="mode-run">Run it</button>
+                            <button type="button" class="cmd-opt" role="radio" aria-checked="false" data-mode="inspect" id="mode-inspect">Read it first</button>
+                        </div>
+                    </div>
+
+                    <div class="terminal" id="panel-mac" role="tabpanel" aria-labelledby="tab-mac">
+                        <div class="terminal-bar">
+                            <span class="traffic" aria-hidden="true"><i></i><i></i><i></i></span>
+                            <span class="terminal-title">Terminal &middot; zsh</span>
+                            <button type="button" class="copy-btn" data-copy-target="cmd-mac" aria-label="Copy the macOS command">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                                <span class="btn-text">Copy</span>
+                            </button>
+                        </div>
+                        <!-- The inspect lines end in && so every shell reads all three
+                             before running any: pasted line by line into a shell
+                             without bracketed paste, less would otherwise swallow
+                             the third line as keystrokes. -->
+                        <code class="terminal-body prompt-mac" id="cmd-mac" title="Click to copy"
+                            data-run="/bin/bash -c &quot;$(curl -fsSL https://dandanilyuk.github.io/adobe_services_disabler/disable_adobe_services.sh)&quot;"
+                            data-inspect="curl -fsSLO https://dandanilyuk.github.io/adobe_services_disabler/disable_adobe_services.sh &amp;&amp;&#10;less disable_adobe_services.sh &amp;&amp;&#10;bash disable_adobe_services.sh">/bin/bash -c "$(curl -fsSL https://dandanilyuk.github.io/adobe_services_disabler/disable_adobe_services.sh)"</code>
+                        <p class="terminal-hint hint-run">Open Terminal with <kbd>&#8984;</kbd> <kbd>Space</kbd>, type Terminal, <kbd>Return</kbd>, and paste. It shows what is currently running, then an arrow-key picker: disable or enable. Asks for sudo only to cover Adobe's system daemons. <a href="https://github.com/DanDanilyuk/adobe_services_disabler/blob/main/disable_adobe_services.sh" target="_blank" rel="noopener noreferrer">Read the script first</a></p>
+                        <p class="terminal-hint hint-inspect" hidden>Downloads the script and opens it in less. Press <kbd>q</kbd> when you are done reading and it starts; nothing changes until you pick from its menu. The downloaded copy deletes itself when it finishes. <a href="https://github.com/DanDanilyuk/adobe_services_disabler/blob/main/disable_adobe_services.sh" target="_blank" rel="noopener noreferrer">Or read it on GitHub</a></p>
+                    </div>
+
+                    <div class="terminal" id="panel-win" role="tabpanel" aria-labelledby="tab-win" hidden>
+                        <div class="terminal-bar">
+                            <span class="terminal-title">Windows PowerShell</span>
+                            <span class="win-controls" aria-hidden="true"><i>&#x2013;</i><i>&#x25A1;</i><i>&#x2715;</i></span>
+                            <button type="button" class="copy-btn" data-copy-target="cmd-win" aria-label="Copy the Windows command">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                                <span class="btn-text">Copy</span>
+                            </button>
+                        </div>
+                        <!-- Inspect: saved to TEMP because an Administrator window
+                             starts in System32. Run with -File and Bypass because a
+                             bare .\script.ps1 is refused under Windows' default
+                             execution policy. Notepad does not block, so the script
+                             starts beside it and waits at its menu. -->
+                        <code class="terminal-body prompt-win" id="cmd-win" title="Click to copy"
+                            data-run="powershell -NoProfile -ExecutionPolicy Bypass -Command &quot;irm https://dandanilyuk.github.io/adobe_services_disabler/disable_adobe_services.ps1 | iex&quot;"
+                            data-inspect="$f = &quot;$env:TEMP\disable_adobe_services.ps1&quot;&#10;irm https://dandanilyuk.github.io/adobe_services_disabler/disable_adobe_services.ps1 -OutFile $f&#10;notepad $f&#10;powershell -NoProfile -ExecutionPolicy Bypass -File $f">powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://dandanilyuk.github.io/adobe_services_disabler/disable_adobe_services.ps1 | iex"</code>
+                        <p class="terminal-hint hint-run">Open an Administrator window with <kbd>Win</kbd> <kbd>X</kbd>, then Terminal (Admin), and paste. That covers services and machine-wide tasks. Same status view and picker, no flags. <a href="https://github.com/DanDanilyuk/adobe_services_disabler/blob/main/disable_adobe_services.ps1" target="_blank" rel="noopener noreferrer">Read the script first</a></p>
+                        <p class="terminal-hint hint-inspect" hidden>Saves the script, opens it in Notepad, and starts it in this window. Read it, then pick from its menu; nothing changes before that. Use an Administrator window to cover services and machine-wide tasks. <a href="https://github.com/DanDanilyuk/adobe_services_disabler/blob/main/disable_adobe_services.ps1" target="_blank" rel="noopener noreferrer">Or read it on GitHub</a></p>
+                    </div>
+
+                    <p class="os-note" id="osNote">Detected <strong>macOS</strong>. Use the tabs if that's not this machine.</p>
+                    <p class="sr-status" id="copyStatus" role="status" aria-live="polite"></p>
+                </div>
+
+                <aside class="monitor" aria-label="Simulated view of Adobe background processes being stopped">
+                    <div class="monitor-chrome">
+                        <span class="traffic" aria-hidden="true"><i></i><i></i><i></i></span>
+                        <span class="monitor-title" id="monitorTitle">Activity Monitor &middot; Adobe</span>
+                        <span class="win-controls" aria-hidden="true"><i>&#x2013;</i><i>&#x25A1;</i><i>&#x2715;</i></span>
+                        <button type="button" class="replay-btn" id="replayBtn" aria-label="Replay the demo">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+                        </button>
+                    </div>
+                    <div class="monitor-head" aria-hidden="true">
+                        <span>Process</span><span>Memory</span><span>Status</span>
+                    </div>
+                    <ul class="monitor-rows" id="monitorRows" role="list"></ul>
+                    <div class="monitor-tally">
+                        <div class="tally-track" aria-hidden="true"><i id="tallyFill"></i></div>
+                        <span id="monitorTally"></span>
+                    </div>
+                </aside>
+            </section>
+
             <section class="card">
                 <h2>The only interface</h2>
                 <p class="card-lede">No flags, no options. After a listing of what Adobe has installed, three choices. Arrow keys move, Enter selects, q or Esc backs out. Nothing is touched until you pick Disable or Enable.</p>
@@ -159,7 +177,7 @@
                         <span class="terminal-title">after you run it</span>
                     </div>
                     <p class="status-kicker">Current Adobe launch items:</p>
-                    <ul class="status-list" aria-label="Example macOS status listing">
+                    <ul class="status-list" role="list" aria-label="Example macOS status listing">
                         <li><span class="kind">agent</span><code>com.adobe.AdobeCreativeCloud</code><span>enabled</span></li>
                         <li><span class="kind">agent</span><code>com.adobe.CCXProcess</code><span>enabled</span></li>
                         <li><span class="kind">agent</span><code>com.adobe.GC.Invoker-1.0</code><span>enabled</span></li>
@@ -167,7 +185,7 @@
                         <li><span class="kind">appex</span><code>com.adobe.accmac.ACCFinderSync</code><span>enabled</span></li>
                     </ul>
                     <p class="menu-instr">Up/down to move, Enter to select, q to quit:</p>
-                    <ul class="picker" aria-label="Example menu">
+                    <ul class="picker" role="list" aria-label="Example menu">
                         <li class="sel">Disable Adobe startup services</li>
                         <li>Enable Adobe startup services</li>
                         <li>Quit</li>
@@ -180,7 +198,7 @@
                         <span class="win-controls" aria-hidden="true"><i>&#x2013;</i><i>&#x25A1;</i><i>&#x2715;</i></span>
                     </div>
                     <p class="status-kicker">Current Adobe startup items:</p>
-                    <ul class="status-list" aria-label="Example Windows status listing">
+                    <ul class="status-list" role="list" aria-label="Example Windows status listing">
                         <li><span class="kind">service</span><code>AdobeUpdateService</code><span>enabled (Automatic)</span></li>
                         <li><span class="kind">service</span><code>AGMService</code><span>enabled (Automatic)</span></li>
                         <li><span class="kind">task</span><code>Adobe Acrobat Update Task</code><span>enabled</span></li>
@@ -188,7 +206,7 @@
                         <li><span class="kind">running</span><code>CCXProcess</code><span>pid 4821</span></li>
                     </ul>
                     <p class="menu-instr">Up/down to move, Enter to select, q to quit:</p>
-                    <ul class="picker" aria-label="Example menu">
+                    <ul class="picker" role="list" aria-label="Example menu">
                         <li class="sel">Disable Adobe startup services</li>
                         <li>Enable Adobe startup services</li>
                         <li>Quit</li>
@@ -256,7 +274,7 @@
                     <li>On Windows, run from an Administrator window to cover services, scheduled tasks, and machine-wide startup entries. Without admin, per-user items are still handled.</li>
                     <li>On macOS, also check System Settings &gt; General &gt; Login Items and turn off anything from Adobe listed there.</li>
                     <li>Quitting from the menu is always safe: nothing is touched until you pick Disable or Enable.</li>
-                    <li>If you download the script instead of running the one-liner, it deletes itself once it finishes, so nothing is left in your Downloads folder.</li>
+                    <li>If you download the script instead of running the one-liner, it deletes itself once it finishes, so no copy is left lying around.</li>
                 </ul>
             </section>
         </main>
@@ -264,12 +282,12 @@
         <footer>
             <p class="foot-links">
                 <a href="https://github.com/DanDanilyuk/adobe_services_disabler" target="_blank" rel="noopener noreferrer">Scripts + site on GitHub</a>
-                <span class="foot-sep">&middot;</span>
+                <span class="foot-sep" aria-hidden="true">&middot;</span>
                 <a href="https://github.com/DanDanilyuk/adobe_services_disabler/issues" target="_blank" rel="noopener noreferrer">Report an issue</a>
-                <span class="foot-sep">&middot;</span>
+                <span class="foot-sep" aria-hidden="true">&middot;</span>
                 <a href="https://github.com/DanDanilyuk/adobe_services_disabler/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">MIT</a>
-                <span class="foot-sep">&middot;</span>
-                <span>No analytics, no cookies.</span>
+                <span class="foot-sep" aria-hidden="true">&middot;</span>
+                <span class="foot-item">No analytics, no cookies.</span>
             </p>
             <p class="foot-made">Built by <a href="https://www.dandanilyuk.com/" target="_blank" rel="noopener noreferrer">Dan Danilyuk</a></p>
         </footer>

@@ -68,15 +68,40 @@
     mac: document.getElementById('menu-mac'),
     win: document.getElementById('menu-win')
   };
-  var osName = document.getElementById('osName');
+  var osNote = document.getElementById('osNote');
   var currentOS = 'mac';
   var cmdMode = 'run';
 
-  function detectOS() {
+  // 'mac', 'win', 'phone' or 'other'. Only the first two can run the scripts;
+  // the rest still get the Mac tab, but must not be told it was "detected".
+  function detectPlatform() {
     var p = (navigator.userAgentData && navigator.userAgentData.platform) ||
-      navigator.platform || navigator.userAgent || '';
-    return /win/i.test(p) ? 'win' : 'mac';
+      navigator.platform || '';
+    var ua = navigator.userAgent || '';
+    // iPadOS reports itself as a Mac; only the touch points give it away.
+    if (/android|iphone|ipad|ipod/i.test(p + ' ' + ua) ||
+        (/mac/i.test(p) && navigator.maxTouchPoints > 1)) return 'phone';
+    if (/win/i.test(p) || /windows nt/i.test(ua)) return 'win';
+    if (/mac/i.test(p) || /macintosh/i.test(ua)) return 'mac';
+    return 'other';
   }
+
+  function describePlatform(platform) {
+    var strong = document.createElement('strong');
+    osNote.textContent = '';
+    if (platform === 'mac' || platform === 'win') {
+      strong.textContent = platform === 'win' ? 'Windows' : 'macOS';
+      osNote.append('Detected ', strong, ". Use the tabs if that's not this machine.");
+    } else if (platform === 'phone') {
+      strong.textContent = 'On a phone?';
+      osNote.append(strong, ' This runs on a Mac or a Windows PC. Pick yours with the tabs.');
+    } else {
+      strong.textContent = 'macOS and Windows only.';
+      osNote.append(strong, ' Pick the machine you will run it on with the tabs.');
+    }
+  }
+
+  var platform = detectPlatform();
 
   function osFromHash() {
     var h = (location.hash || '').replace(/^#/, '').toLowerCase();
@@ -114,13 +139,19 @@
 
   Object.keys(tabs).forEach(function (key) {
     tabs[key].addEventListener('click', function () {
+      // Re-selecting the current tab would reset the demo mid-play.
+      if (key === currentOS) return;
       selectOS(key, { writeHash: true });
     });
     tabs[key].addEventListener('keydown', function (e) {
-      if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-        e.preventDefault();
-        selectOS(key === 'mac' ? 'win' : 'mac', { writeHash: true, focusTab: true });
-      }
+      var next = null;
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') next = key === 'mac' ? 'win' : 'mac';
+      else if (e.key === 'Home') next = 'mac';
+      else if (e.key === 'End') next = 'win';
+      if (!next) return;
+      e.preventDefault();
+      if (next === currentOS) tabs[next].focus();
+      else selectOS(next, { writeHash: true, focusTab: true });
     });
   });
 
@@ -166,7 +197,8 @@
       setCmdMode(btn.getAttribute('data-mode'), false);
     });
     btn.addEventListener('keydown', function (e) {
-      if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+      // Radio groups answer to all four arrows, unlike tabs.
+      if (/^Arrow(Left|Right|Up|Down)$/.test(e.key)) {
         e.preventDefault();
         setCmdMode(cmdMode === 'run' ? 'inspect' : 'run', true);
       }
@@ -177,43 +209,79 @@
 
   var copyStatus = document.getElementById('copyStatus');
 
-  function copyText(text) {
-    if (navigator.clipboard && window.isSecureContext) {
-      return navigator.clipboard.writeText(text);
-    }
+  function copyViaTextarea(text) {
     return new Promise(function (resolve, reject) {
+      // Selecting the textarea steals focus; hand it back afterwards so a
+      // keyboard user is not dropped at the top of the page.
+      var prev = document.activeElement;
       var ta = document.createElement('textarea');
       ta.value = text;
       ta.setAttribute('readonly', '');
       ta.style.position = 'fixed';
+      ta.style.top = '0';
       ta.style.opacity = '0';
       document.body.appendChild(ta);
       ta.select();
-      var ok = document.execCommand('copy');
+      var ok = false;
+      try {
+        ok = document.execCommand('copy');
+      } catch (e) { /* treated as a failure below */ }
       document.body.removeChild(ta);
+      if (prev && prev.focus) prev.focus();
       ok ? resolve() : reject(new Error('copy failed'));
     });
+  }
+
+  function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      // The async API can still refuse (permissions policy in an embed, a
+      // document that lost focus); the old path often works when it does.
+      return navigator.clipboard.writeText(text).catch(function () {
+        return copyViaTextarea(text);
+      });
+    }
+    return copyViaTextarea(text);
   }
 
   document.querySelectorAll('.copy-btn').forEach(function (btn) {
     var label = btn.querySelector('.btn-text');
     var resetTimer = null;
+    function resetLater(ms) {
+      // A second click within the window restarts the timer, so the
+      // "Copied" state does not get cut short by the first click's reset.
+      clearTimeout(resetTimer);
+      resetTimer = setTimeout(function () {
+        btn.classList.remove('copied');
+        label.textContent = 'Copy';
+        copyStatus.textContent = '';
+      }, ms);
+    }
+
     btn.addEventListener('click', function () {
-      var cmd = document.getElementById(btn.getAttribute('data-copy-target')).textContent;
-      copyText(cmd).then(function () {
+      var target = document.getElementById(btn.getAttribute('data-copy-target'));
+      copyText(target.textContent).then(function () {
         btn.classList.add('copied');
         label.textContent = 'Copied';
-        copyStatus.textContent = 'Command copied to clipboard.';
-        // A second click within the window restarts the timer, so the
-        // "Copied" state does not get cut short by the first click's reset.
-        clearTimeout(resetTimer);
-        resetTimer = setTimeout(function () {
-          btn.classList.remove('copied');
-          label.textContent = 'Copy';
-          copyStatus.textContent = '';
-        }, 1800);
+        copyStatus.textContent = cmdMode === 'inspect' ? 'Commands copied to clipboard.' : 'Command copied to clipboard.';
+        resetLater(1800);
       }).catch(function () {
-        copyStatus.textContent = 'Copy failed. Select the command text and copy it manually.';
+        // Leave the command selected so one keystroke finishes the job, and
+        // say which keystroke on the button itself, not only to screen readers.
+        var range = document.createRange();
+        range.selectNodeContents(target);
+        var sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+        btn.classList.remove('copied');
+        if (platform === 'phone') {
+          label.textContent = 'Selected';
+          copyStatus.textContent = 'Could not copy automatically. The command is selected; copy it from the selection menu.';
+        } else {
+          var keys = platform === 'mac' ? '⌘C' : 'Ctrl+C';
+          label.textContent = 'Press ' + keys;
+          copyStatus.textContent = 'Could not copy automatically. The command is selected; press ' + keys + ' to copy it.';
+        }
+        resetLater(4000);
       });
     });
   });
@@ -387,6 +455,9 @@
 
   var cards = document.querySelectorAll('.card');
   if (!reducedMotion.matches && 'IntersectionObserver' in window) {
+    // A margin, not a ratio threshold: at high zoom a card can be so tall that
+    // the required share of it never fits on screen, and it would stay
+    // invisible for good.
     var io = new IntersectionObserver(function (entries) {
       entries.forEach(function (entry) {
         if (entry.isIntersecting) {
@@ -394,7 +465,7 @@
           io.unobserve(entry.target);
         }
       });
-    }, { threshold: 0.12 });
+    }, { rootMargin: '0px 0px -8% 0px' });
     cards.forEach(function (card) {
       card.classList.add('reveal');
       io.observe(card);
@@ -403,7 +474,6 @@
 
   /* ---------- Boot ---------- */
 
-  var detected = detectOS();
-  osName.textContent = detected === 'win' ? 'Windows' : 'macOS';
-  selectOS(osFromHash() || detected, {});
+  describePlatform(platform);
+  selectOS(osFromHash() || (platform === 'win' ? 'win' : 'mac'), {});
 })();
