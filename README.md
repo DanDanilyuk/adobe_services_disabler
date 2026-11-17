@@ -72,20 +72,35 @@ straight into a shell there is no file to remove in the first place.
 
 **macOS** (`disable_adobe_services.sh`)
 
-- **launchd agents and daemons** - every `com.adobe.*.plist` in
-  `/Library/LaunchAgents`, `~/Library/LaunchAgents` and `/Library/LaunchDaemons`
-  is booted out and marked disabled, so it stays off across reboots. Found by
-  wildcard, so it still works after an Adobe update recreates them.
+- **launchd agents and daemons** - every `com.adobe.*` job is booted out and
+  marked disabled, so it stays off across reboots. Jobs are found three ways:
+  the plists in `/Library/LaunchAgents`, `~/Library/LaunchAgents` and
+  `/Library/LaunchDaemons`; the plists Adobe apps carry inside their own bundles
+  (`CCLibrary.app` registers one that never shows up in those folders); and
+  anything launchd has loaded under an Adobe label right now. The disabled mark
+  is kept by label, so it survives an Adobe update recreating the plist.
 - **App extensions** - Finder Sync (`ACCFinderSync`) and the right-click
   extension are switched off with `pluginkit -e ignore`. macOS relaunches these
   itself, so this is the only level at which they stay off.
-- **Running helpers** - anything whose executable path contains `adobe` is
-  stopped, *except* the creative apps under `/Applications/Adobe*` (Photoshop,
-  Lightroom, Acrobat, and the rest). The Creative Cloud desktop app is a
-  helper and is stopped.
+- **Running helpers** - anything running out of Adobe's support folders
+  (`/Library/Application Support/Adobe`, `/Applications/Utilities/Adobe*`, the
+  privileged helper tools) is stopped, the Creative Cloud desktop app included.
+  Photoshop, Lightroom, Acrobat and the other apps you open yourself are never
+  touched, wherever they are installed. A helper that one of those apps started
+  and is still using is left alone too, and stopped on a later run once the app
+  has quit.
+
+When it finishes it looks again and prints what is actually on and off, rather
+than assuming every step worked. Anything still on is called out, and a step
+that fails outright makes the exit status non-zero.
 
 sudo is requested once, and only if Adobe system daemons are present. Decline it
-and everything else is still applied.
+and everything else is still applied. Do not start the script itself with sudo:
+it would be acting on root's account instead of yours, so it refuses.
+
+Disable also refuses to run while Adobe is installing, updating or uninstalling
+something, because stopping its helpers part way through can leave a broken
+install. Run it again once that has finished.
 
 **Windows** (`disable_adobe_services.ps1`)
 
@@ -106,8 +121,9 @@ per-user items are handled. The script says so up front.
 - **The Windows script has never been run on a real Windows machine.** It was
   written and reviewed carefully, and it parses as balanced PowerShell, but it
   has not been executed. Treat the first run as a test. Reports welcome.
-- Opening the Creative Cloud desktop app can respawn some helpers until your
-  next reboot. They stay off after that.
+- Opening an Adobe app starts some helpers again. Their launch items stay
+  disabled, so they do not come back at login, but run the command again to stop
+  the ones that are running.
 - Adobe installers recreate their launch items during updates. Re-run the
   command whenever that happens; it rediscovers whatever exists.
 - On macOS, also check System Settings > General > Login Items and turn off
@@ -119,6 +135,7 @@ per-user items are handled. The script says so up front.
 | --- | --- |
 | `disable_adobe_services.sh` | The macOS script. |
 | `disable_adobe_services.ps1` | The Windows script. |
+| `test/test.sh` | Tests for the macOS script. They run it against a fake machine (stubbed `launchctl`, `pluginkit`, `ps`, `sudo` and `kill`), so nothing real is touched: `bash test/test.sh`. |
 | `index.html`, `style.css`, `main.js`, `theme-init.js` | The landing page, served by GitHub Pages from the repo root. |
 
 ## License
